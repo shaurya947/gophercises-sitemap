@@ -28,12 +28,7 @@ func BuildFromUrlStr(siteUrlStr string) ([]*url.URL, error) {
 
 		ret = append(ret, currPageUrl)
 		visited[currPageUrlStr] = true
-		resp, err := http.Get(currPageUrlStr)
-		if err != nil {
-			return nil, err
-		}
-
-		links, err := linkparser.ParseFromReader(resp.Body)
+		links, err := parseLinksFromPage(currPageUrlStr)
 		if err != nil {
 			return nil, err
 		}
@@ -45,6 +40,21 @@ func BuildFromUrlStr(siteUrlStr string) ([]*url.URL, error) {
 	}
 
 	return ret, nil
+}
+
+func parseLinksFromPage(pageUrlStr string) ([]linkparser.Link, error) {
+	resp, err := http.Get(pageUrlStr)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	links, err := linkparser.ParseFromReader(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	return links, nil
 }
 
 func processLinksInBFS(queue []*url.URL, links []linkparser.Link, currPageUrl *url.URL) ([]*url.URL, error) {
